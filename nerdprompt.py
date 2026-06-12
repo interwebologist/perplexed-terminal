@@ -86,7 +86,7 @@ class PerplexityWrapper:
         system_msg = self.messages[0]
         self.messages = [system_msg]
 
-    def markdown_to_ansi(self, codes, config, markdown_text):
+    def markdown_to_ansi(self, ANSI_CODES, config, markdown_text):
         """Convert basic markdown elements to ANSI terminal sequences."""
         # Process headers
         if '#' in markdown_text:
@@ -95,8 +95,8 @@ class PerplexityWrapper:
                 header_name = f"header_{level}"
                 if config.get(header_name):
                     ansi_codes_list = config[header_name]
-                    prefix = ''.join(codes[code] for code in ansi_codes_list)
-                    suffix = codes['reset']
+                    prefix = ''.join(ANSI_CODES[code] for code in ansi_codes_list)
+                    suffix = ANSI_CODES['reset']
                     header_ansi[level] = (prefix, suffix)
                 else:
                     header_ansi[level] = ('', '')
@@ -114,10 +114,10 @@ class PerplexityWrapper:
 
         # Process bold and italic
         if '*' in markdown_text:
-            reset = codes['reset']
-            bold_italic = f"{codes['bold_italic']}\\1{reset}"
-            bold = f"{codes['bold']}\\1{reset}"
-            italic = f"{codes['italic']}\\1{reset}"
+            reset = ANSI_CODES['reset']
+            bold_italic = f"{ANSI_CODES['bold_italic']}\\1{reset}"
+            bold = f"{ANSI_CODES['bold']}\\1{reset}"
+            italic = f"{ANSI_CODES['italic']}\\1{reset}"
 
             markdown_text = re.sub(r'\*\*\*(.+?)\*\*\*', bold_italic, markdown_text)
             markdown_text = re.sub(r'\*\*(.+?)\*\*', bold, markdown_text)
@@ -128,8 +128,8 @@ class PerplexityWrapper:
         divider_text = config["ascii_dividers"][divider_choice]
 
         if config.get("dividers_color"):
-            color = codes[config['dividers_color']]
-            divider_text = f"{color}{divider_text}{codes['reset']}"
+            color = ANSI_CODES[config['dividers_color']]
+            divider_text = f"{color}{divider_text}{ANSI_CODES['reset']}"
 
         if '---' in markdown_text:
             markdown_text = re.sub(r'^---$', rf"{divider_text}", markdown_text, flags=re.MULTILINE)
@@ -197,7 +197,7 @@ class CodeProcesser:
         code_data['highlighted_code'] = highlighted
         return code_data
 
-    def rebuild_code_type_and_syntax(self, codes, config, code_data):
+    def rebuild_code_type_and_syntax(self, ANSI_CODES, config, code_data):
         """Rebuild highlighted code block with custom dividers."""
         code_type = code_data['code_type'].capitalize()
         code_syntax = code_data['highlighted_code']
@@ -205,8 +205,8 @@ class CodeProcesser:
         divider = config["code_dividers"][choice]
 
         if config.get("code_dividers_color"):
-            color = codes[config['code_dividers_color']]
-            reset = codes['reset']
+            color = ANSI_CODES[config['code_dividers_color']]
+            reset = ANSI_CODES['reset']
             divider = f"{color}{divider}{reset}"
 
         return f"\n{divider}\n\n{code_type} Code:\n{code_syntax}\n{divider}\n"
@@ -222,9 +222,9 @@ class ConfigEater:
         with open(config_path, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
 
-    def check_config(self, codes, config_dict):
+    def check_config(self, ANSI_CODES, config_dict):
         """Validate configuration using Cerberus schema."""
-        ansi_list = list(codes.keys())
+        ansi_list = list(ANSI_CODES.keys())
         schema = {
             'llm_url': {'type': 'string', 'required': True},
             'llm_model': {'type': 'string', 'required': True},
